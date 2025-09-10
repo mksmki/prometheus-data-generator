@@ -1,5 +1,6 @@
 .PHONY: help
 VERSION:=$(shell grep VERSION setup.py | head -n1 | cut -d"'" -f2)
+TOX:=$(shell grep TOX setup.py | head -n1 | cut -d"'" -f2)
 
 help:
 	@echo "Please use 'make <target>' where <target> is one of"
@@ -17,8 +18,10 @@ clean:
 	rm -fr dist build
 
 test:
-	docker run --name test-prometheus-data-generator --tty -v `pwd`:/tox --rm \
-		alexperezpujol/tox:latest tox
+	docker run --rm --name test-prometheus-data-generator --tty -v `pwd`/src:/tox \
+		-v `pwd`/tox.ini:/tox.ini:ro -w /tox \
+		-v `pwd`/requirements.txt:/tox/requirements.txt:ro \
+		kiwicom/tox:$(TOX)
 
 docker-build:
 	docker build -t mksmki/prometheus-data-generator .
@@ -27,5 +30,9 @@ docker-push:
 	@docker tag mksmki/prometheus-data-generator:latest mksmki/prometheus-data-generator:$(VERSION)
 	@docker push mksmki/prometheus-data-generator:latest
 	@docker push mksmki/prometheus-data-generator:$(VERSION)
+
+run:
+	docker run --rm -ti -v `pwd`/config.yml:/config.yml -e PDG_LOG_LEVEL=DEBUG -p 127.0.0.1:9000:9000 \
+		mksmki/prometheus-data-generator:latest
 
 all: clean test build

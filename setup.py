@@ -3,6 +3,7 @@
 from setuptools import setup
 
 VERSION = '0.2'
+TOX = '4.24.1'
 
 setup(
     name='prometheus-data-generator',

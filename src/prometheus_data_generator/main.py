@@ -10,29 +10,18 @@ from flask import Flask, Response
 from prometheus_client import Gauge, Counter, Summary, Histogram
 from prometheus_client import generate_latest, CollectorRegistry
 
+from . import const
 
-if "PDG_LOG_LEVEL" in environ:
-    supported_log_levels = ["INFO", "ERROR", "DEBUG"]
-    if environ["PDG_LOG_LEVEL"].upper() not in supported_log_levels:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s.%(msecs)03d %(levelname)s - %(funcName)s: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        logger = logging.getLogger("prometheus-data-generator")
-    logging.basicConfig(
-        format="%(asctime)s.%(msecs)03d %(levelname)s - %(funcName)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    logger = logging.getLogger("prometheus-data-generator")
-    logger.setLevel(environ["PDG_LOG_LEVEL"].upper())
-else:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s.%(msecs)03d %(levelname)s - %(funcName)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    logger = logging.getLogger("prometheus-data-generator")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s.%(msecs)03d %(levelname)s - %(funcName)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger("prometheus-data-generator")
+if "PDG_LOG_LEVEL" in environ:    # if PDG_LOG_LEVEL is set, use it
+    if environ["PDG_LOG_LEVEL"].upper() in const.supported_log_levels:
+        logger.setLevel(environ["PDG_LOG_LEVEL"].upper())
 
 
 def read_configuration():
