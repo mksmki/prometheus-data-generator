@@ -44,3 +44,42 @@ metrics:
             eval_time: 1
             value: 3
             operation: inc
+
+  - name: snmp_sysUpTimeInstance
+    description: System uptime
+    type: counter
+    labels: [host, ip, interface]
+    instances:
+      # Host: apple
+      - name: apple
+        labels:
+          host: apple
+          ip: 10.10.11.2
+          interface: eth0
+        sequence:
+          - time: 1
+            eval_time: 1
+            value: 1
+            operation: inc
+      # Host: grape
+      - name: grape
+        labels:
+          host: grape
+          ip: 10.10.11.5
+          interface: eth0
+        sequence:
+          - time: 1
+            eval_time: 1
+            value: 1
+            operation: inc
+      # Host: zala
+      - name: zala
+        labels:
+          host: zala
+          ip: 10.10.11.8
+          interface: eth0
+        sequence:
+          - time: 1
+            eval_time: 1
+            value: 1
+            operation: inc
