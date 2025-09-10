@@ -4,10 +4,10 @@ metrics:
     description: Inbound traffic on the interface
     type: counter
     labels: [host, ip, interface]
-    sequence:
+    sequences:
       # Group: apple
       - time: 5
-        values: 0-20
+        range: 0-20
         operation: inc
         labels:
           host: apple
@@ -22,7 +22,7 @@ metrics:
       # Group: grape
       - time: 5
         eval_time: 1
-        values: 0-20
+        range: 0-20
         operation: inc
         labels:
           host: grape
@@ -30,7 +30,7 @@ metrics:
           interface: eth0
       - time: 5
         eval_time: 1
-        values: 0-5
+        range: 0-5
         operation: dec
         labels:
           host: grape

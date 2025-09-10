@@ -31,21 +31,21 @@ config:
     sequence:
       - time: 5
         eval_time: 5
-        values: 0-20
+        range: 0-20
         operation: inc
         labels:
           name: apple
           color: red
       - time: 5
         eval_time: 5
-        values: 0-20
+        range: 0-20
         operation: inc
         labels:
           name: apple
           color: green
       - time: 5
         eval_time: 5
-        values: 0-5
+        range: 0-5
         operation: dec
         labels:
           name: apple
@@ -84,10 +84,10 @@ number_of_fruits{color="yellow",name="apple"} 4.0
 - `sequence.interval`: The interval of seconds between each operation will be
   performed. 1 second is a sane number. [**Type**: int] [**Required**]
 - `sequence.value`: The value that the operation will apply. It must be a single
-  value. You must choose between `value` and `values`. [**Type**: int] [**Optional**]
-- `sequence.values`: The range of values that will randomly be choosed and the
-  operation will apply. It must be two values separed by a dash. You must choose
-  between `value` and `values`. [**Type**: string (int-int / float-float)] [**Optional**]
+  value. You must choose between `value` and `range`. [**Type**: int] [**Optional**]
+- `sequence.range`: The range of values that will randomly be choosed and the
+  operation will apply. It must be two range separed by a dash. You must choose
+  between `value` and `range`. [**Type**: string (int-int / float-float)] [**Optional**]
 - `sequence.operation`: The operation that will be applied. It only will be used
   with the gauge type, and you can choose between `inc`, `dec` or `set`. [**Optional**]
 - `sequence.labels`: The labels of the sequence. They must be used if `labels`

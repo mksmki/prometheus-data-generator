@@ -128,7 +128,7 @@ class PrometheusDataGenerator:
         while True:
             if self.stopped:
                 break
-            for sequence in metric_metadata["sequence"]:
+            for sequence in metric_metadata["sequences"]:
                 if self.stopped:
                     break
 
@@ -172,14 +172,14 @@ class PrometheusDataGenerator:
                         else:
                             value = int(value)
 
-                    elif "values" in sequence:
-                        if "." in sequence["values"].split("-")[0]:
-                            initial_value = float(sequence["values"].split("-")[0])
-                            end_value = float(sequence["values"].split("-")[1])
+                    elif "range" in sequence:
+                        if "." in sequence["range"].split("-")[0]:
+                            initial_value = float(sequence["range"].split("-")[0])
+                            end_value = float(sequence["range"].split("-")[1])
                             value = random.uniform(initial_value, end_value)
                         else:
-                            initial_value = int(sequence["values"].split("-")[0])
-                            end_value = int(sequence["values"].split("-")[1])
+                            initial_value = int(sequence["range"].split("-")[0])
+                            end_value = int(sequence["range"].split("-")[1])
                             value = random.randrange(initial_value, end_value)
 
                     if metric_metadata["type"].lower() == "gauge":
