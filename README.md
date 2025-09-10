@@ -190,25 +190,130 @@ docker run -ti -v `pwd`/config.yml:/config.yml -p 127.0.0.1:9000:9000 \
 curl localhost:9000/metrics/
 ```
 
-## Use in kubernetes
+## Deployment with Helm
 
-There's some example manifests in the `kubernetes` directory. There's defined a
-service, configmap, deployment (with
-[configmap-reload](https://github.com/jimmidyson/configmap-reload) configured)
-and a Service Monitor to be used with the [prometheus
-operator](https://github.com/coreos/prometheus-operator).
+The easiest way to deploy Prometheus Data Generator to Kubernetes is using the provided Helm chart. The chart includes all necessary resources: Deployment, Service, ConfigMap, and ServiceMonitor.
 
-You may deploy the manifests:
+### Prerequisites
 
-``` bash
-kubectl create namespace prom-data-gen
-kubectl -n prom-data-gen apply -f kubernetes/
-kubectl -n prom-data-gen port-forward service/prometheus-data-generator 9000:9000
-curl localhost:9000/metrics/
+- Kubernetes cluster
+- Helm 3.x installed
+- Prometheus Operator (for ServiceMonitor support)
+
+### Basic Installation
+
+```bash
+# Add the repository (if published)
+helm repo add prometheus-data-generator https://mksmki.github.io/prometheus-data-generator
+helm repo update
+
+# Install with default values
+helm install prometheus-data-generator prometheus-data-generator/prometheus-data-generator
+
+# Or install from local chart
+helm install prometheus-data-generator ./helm-chart
 ```
 
-You can edit the configmap as you wish and the configmap-reload will
-eventually reload the configuration without killing the pod.
+### Custom Configuration
+
+You can customize the deployment by creating a custom values file:
+
+```yaml
+# custom-values.yaml
+replicaCount: 2
+
+image:
+  repository: mksmki/prometheus-data-generator
+  tag: "1.1.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9000
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 200Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+# Custom configuration
+config:
+  metrics:
+    - name: custom_metric
+      description: A custom metric for testing
+      type: gauge
+      labels: [environment, service]
+      instances:
+        - name: production
+          labels:
+            environment: prod
+            service: api
+          sequence:
+            - eval_time: 10
+              range: 1-100
+              operation: inc
+```
+
+Install with custom values:
+
+```bash
+helm install prometheus-data-generator ./helm-chart -f custom-values.yaml
+```
+
+### Configuration Management
+
+The Helm chart supports hot-reloading of configuration through the configmap-reload sidecar container. You can update the configuration by:
+
+1. **Editing the ConfigMap directly:**
+```bash
+kubectl edit configmap prometheus-data-generator
+```
+
+2. **Upgrading the Helm release:**
+```bash
+helm upgrade prometheus-data-generator ./helm-chart -f updated-values.yaml
+```
+
+3. **Using Helm's `--set` flag:**
+```bash
+helm upgrade prometheus-data-generator ./helm-chart --set replicaCount=3
+```
+
+### ServiceMonitor Integration
+
+The chart includes a ServiceMonitor resource for automatic discovery by Prometheus Operator. The ServiceMonitor is configured with:
+
+- **Scrape interval**: 10 seconds
+- **Metrics path**: `/metrics/`
+- **Port**: `metrics`
+
+To enable ServiceMonitor discovery, ensure your Prometheus instance has the appropriate label selectors configured.
+
+### Uninstalling
+
+```bash
+helm uninstall prometheus-data-generator
+```
+
+### Chart Values Reference
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `replicaCount` | Number of replicas | `1` |
+| `image.repository` | Container image repository | `mksmki/prometheus-data-generator` |
+| `image.tag` | Container image tag | `""` (uses Chart.AppVersion) |
+| `image.pullPolicy` | Image pull policy | `IfNotPresent` |
+| `service.type` | Kubernetes service type | `ClusterIP` |
+| `service.port` | Service port | `9000` |
+| `resources` | Resource limits and requests | `{}` |
+| `serviceAccount.create` | Create service account | `true` |
+| `ingress.enabled` | Enable ingress | `false` |
+
+For a complete list of configurable values, see the [values.yaml](helm-chart/values.yaml) file.
+
 
 ## Generate prometheus alerts unit tests
 
