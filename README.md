@@ -23,48 +23,60 @@ There's an example configuration file called `config.yml` in the root of the
 repository. It has the next format:
 
 ``` yaml
-config:
-  - name: number_of_fruits
-    description: The number of fruits we have.
-    type: gauge
-    labels: [name, color]
-    sequence:
+metrics:
+  - name: snmp_ifHCInOctets
+    description: Inbound traffic on the interface
+    type: counter
+    labels: [host, ip, interface]
+    sequences:
+      # Group: apple
       - time: 5
-        eval_time: 5
         range: 0-20
         operation: inc
         labels:
-          name: apple
-          color: red
+          host: apple
+          ip: 10.10.11.2
+          interface: eth0
+      - eval_time: 5
+        operation: set
+        labels:
+          host: apple
+          ip: 10.10.11.2
+          interface: eth0
+      # Group: grape
       - time: 5
-        eval_time: 5
+        eval_time: 1
         range: 0-20
         operation: inc
         labels:
-          name: apple
-          color: green
+          host: grape
+          ip: 10.10.11.5
+          interface: eth0
       - time: 5
-        eval_time: 5
+        eval_time: 1
         range: 0-5
         operation: dec
         labels:
-          name: apple
-          color: green
+          host: grape
+          ip: 10.10.11.5
+          interface: eth0
+      # Group: zala
       - time: 5
-        eval_time: 5
+        eval_time: 1
         value: 3
         operation: inc
         labels:
-          name: apple
-          color: yellow
+          host: zala
+          ip: 10.10.11.8
+          interface: eth0
 ```
 
 The generated metric will be like this:
 
 ``` text
-number_of_fruits{color="red",name="apple"} 14.0
-number_of_fruits{color="green",name="apple"} 10.0
-number_of_fruits{color="yellow",name="apple"} 4.0
+snmp_ifHCInOctets{host="apple",ip="10.10.11.2",interface="eth0"} 15.0
+snmp_ifHCInOctets{host="grape",ip="10.10.11.5",interface="eth0"} 8.0
+snmp_ifHCInOctets{host="zala",ip="10.10.11.8",interface="eth0"} 3.0
 ```
 
 ### Supported keywords
@@ -79,18 +91,18 @@ number_of_fruits{color="yellow",name="apple"} 4.0
   [**Type**: string] [**Required**]
 - `labels`: The labels that will be used with the metric. [**Type**: list of
   strings] [**Optional**]
-- `sequence.eval_time`: Number of seconds that the sequence will be running.
+- `sequences.eval_time`: Number of seconds that the sequence will be running.
   [**Type**: int] [**Required**]
-- `sequence.interval`: The interval of seconds between each operation will be
+- `sequences.interval`: The interval of seconds between each operation will be
   performed. 1 second is a sane number. [**Type**: int] [**Required**]
-- `sequence.value`: The value that the operation will apply. It must be a single
+- `sequences.value`: The value that the operation will apply. It must be a single
   value. You must choose between `value` and `range`. [**Type**: int] [**Optional**]
-- `sequence.range`: The range of values that will randomly be choosed and the
+- `sequences.range`: The range of values that will randomly be choosed and the
   operation will apply. It must be two range separed by a dash. You must choose
   between `value` and `range`. [**Type**: string (int-int / float-float)] [**Optional**]
-- `sequence.operation`: The operation that will be applied. It only will be used
+- `sequences.operation`: The operation that will be applied. It only will be used
   with the gauge type, and you can choose between `inc`, `dec` or `set`. [**Optional**]
-- `sequence.labels`: The labels of the sequence. They must be used if `labels`
+- `sequences.labels`: The labels of the sequence. They must be used if `labels`
   are declared. [**Optional**]
 
 ### Supported metric types
@@ -104,7 +116,7 @@ The ones defined [here](https://prometheus.io/docs/concepts/metric_types/).
 ## Manual use
 
 ```bash
-git clone https://github.com/little-angry-clouds/prometheus-data-generator.git
+git clone https://github.com/mksmki/prometheus-data-generator.git
 virtualenv -p python3 venv
 pip install -r requirements.txt
 python prometheus_data_generator/main.py
@@ -114,7 +126,7 @@ curl localhost:9000/metrics/
 ## Use in docker
 
 ``` bash
-wget https://raw.githubusercontent.com/little-angry-clouds/prometheus-data-generator/master/config.yml
+wget https://raw.githubusercontent.com/mksmki/prometheus-data-generator/master/config.yml
 docker run -ti -v `pwd`/config.yml:/config.yml -p 127.0.0.1:9000:9000 \
     littleangryclouds/prometheus-data-generator
 curl localhost:9000/metrics/
