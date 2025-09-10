@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 TOX = '4.24.1'
 
 setup(

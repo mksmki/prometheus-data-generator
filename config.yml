@@ -4,44 +4,43 @@ metrics:
     description: Inbound traffic on the interface
     type: counter
     labels: [host, ip, interface]
-    sequences:
-      # Group: apple
-      - time: 5
-        range: 0-20
-        operation: inc
+    instances:
+      # Host: apple
+      - name: apple
         labels:
           host: apple
           ip: 10.10.11.2
           interface: eth0
-      - eval_time: 5
-        operation: set
-        labels:
-          host: apple
-          ip: 10.10.11.2
-          interface: eth0
-      # Group: grape
-      - time: 5
-        eval_time: 1
-        range: 0-20
-        operation: inc
+        sequence:
+          - time: 5
+            eval_time: 5
+            range: 0-20
+            operation: inc
+          - eval_time: 5
+            operation: set
+      # Host: grape
+      - name: grape
         labels:
           host: grape
           ip: 10.10.11.5
           interface: eth0
-      - time: 5
-        eval_time: 1
-        range: 0-5
-        operation: dec
-        labels:
-          host: grape
-          ip: 10.10.11.5
-          interface: eth0
-      # Group: zala
-      - time: 5
-        eval_time: 1
-        value: 3
-        operation: inc
+        sequence:
+          - time: 5
+            eval_time: 1
+            range: 0-20
+            operation: inc
+          - time: 5
+            eval_time: 1
+            range: 0-5
+            operation: dec
+      # Host: zala
+      - name: zala
         labels:
           host: zala
           ip: 10.10.11.8
           interface: eth0
+        sequence:
+          - time: 5
+            eval_time: 1
+            value: 3
+            operation: inc

@@ -5,7 +5,7 @@ Prometheus Data Generator
 A service that generates synthetic Prometheus metrics for testing monitoring
 infrastructure, Grafana dashboards, and alerting rules. Supports multiple
 metric types (Counter, Gauge, Summary, Histogram) with configurable update
-sequences and label combinations.
+instances and label combinations.
 
 Features:
 - Hot-reload configuration via HTTP endpoint
@@ -50,7 +50,7 @@ def read_configuration():
     
     This function loads the configuration from either the PDG_CONFIG environment
     variable or defaults to 'config.yml'. The configuration contains metric
-    definitions including names, types, labels, and update sequences.
+    definitions including names, types, labels, and update instances.
     
     Returns:
         dict: Parsed YAML configuration containing metric definitions
@@ -104,7 +104,7 @@ class PrometheusDataGenerator:
         
         Reads the configuration file and creates Prometheus metric instruments
         (Counter, Gauge, Summary, Histogram) based on the configuration.
-        Each metric gets its own dedicated thread for continuous updates.
+        Each metric instance gets its own dedicated thread for continuous updates.
         
         Supported metric types:
             - Counter: Monotonically increasing values
@@ -113,7 +113,7 @@ class PrometheusDataGenerator:
             - Histogram: Bucket-based statistics
             
         Thread Management:
-            Each metric spawns a separate thread running update_metrics()
+            Each metric instance spawns a separate thread running update_metrics()
             to ensure concurrent metric updates without blocking.
             
         Note:
@@ -162,22 +162,27 @@ class PrometheusDataGenerator:
                 logger.warning(
                     "Unknown metric type {type} for metric {name}, ignoring.".format(**metric)
                 )
+                continue
 
-            t = threading.Thread(
-                target=self.update_metrics,
-                args=(instrument, metric)
-            )
-            t.start()
-            self.threads.append(t)
-            logger.debug(
-                "Initialized metric {}".format(metric["name"])
-            )
+            # Create a thread for each instance of the metric
+            for instance in metric.get("instances", []):
+                t = threading.Thread(
+                    target=self.update_metrics,
+                    args=(instrument, metric, instance)
+                )
+                t.start()
+                self.threads.append(t)
+                logger.debug(
+                    "Initialized metric instance {} for metric {}".format(
+                        instance.get("name", "unnamed"), metric["name"]
+                    )
+                )
 
-    def update_metrics(self, metric_object, metric_metadata):
+    def update_metrics(self, metric_object, metric_metadata, instance_metadata):
         """
-        Continuously update Prometheus metrics based on configuration sequences.
+        Continuously update Prometheus metrics based on configuration instances.
         
-        This method runs in a separate thread for each metric and executes
+        This method runs in a separate thread for each metric instance and executes
         the configured sequences of operations. It supports different value
         generation methods and metric-specific operations.
         
@@ -187,7 +192,11 @@ class PrometheusDataGenerator:
                 Expected keys:
                 - name (str): Metric name
                 - type (str): Metric type (counter, gauge, summary, histogram)
-                - sequences (list): List of update sequences
+            instance_metadata (dict): Configuration data for this specific instance
+                Expected keys:
+                - name (str): Instance name
+                - labels (dict): Label values for this instance
+                - sequence (list): List of update sequences for this instance
                 
         Sequence Configuration:
             Each sequence can contain:
@@ -196,7 +205,6 @@ class PrometheusDataGenerator:
             - value (int/float): Fixed value to use
             - range (str): Random range in format "min-max"
             - operation (str): For gauges only - "inc", "dec", or "set"
-            - labels (dict): Label values for this sequence
             
         Value Generation:
             - Fixed values: Use 'value' key
@@ -214,33 +222,37 @@ class PrometheusDataGenerator:
         # Initialize stop flag for graceful shutdown
         self.stopped = False
         
+        # Extract label values from instance configuration
+        if "labels" in instance_metadata:
+            labels = [key for key in instance_metadata["labels"].values()]
+        else:
+            labels = []
+
         # Main metric update loop - runs until service is stopped
         while True:
             if self.stopped:
                 break
                 
-            # Process each sequence in the metric configuration
-            for sequence in metric_metadata["sequences"]:
+            # Process each sequence in the instance configuration
+            for sequence in instance_metadata.get("sequence", []):
                 if self.stopped:
                     break
-
-                # Extract label values from sequence configuration
-                if "labels" in sequence:
-                    labels = [key for key in sequence["labels"].values()]
-                else:
-                    labels = []
 
                 # Calculate sequence timeout duration
                 if "eval_time" in sequence:
                     timeout = time.time() + sequence["eval_time"]
                 else:
                     logger.warning(
-                        "eval_time for metric {} not set, setting default to 1.".format(metric_metadata["name"])
+                        "eval_time for metric {} instance {} not set, setting default to 1.".format(
+                            metric_metadata["name"], instance_metadata.get("name", "unnamed")
+                        )
                     )
                     timeout = time.time() + 1
 
                 logger.debug(
-                    "Changing sequence in {} metric".format(metric_metadata["name"])
+                    "Changing sequence in {} metric instance {}".format(
+                        metric_metadata["name"], instance_metadata.get("name", "unnamed")
+                    )
                 )
 
                 # Set update interval between metric operations
@@ -248,7 +260,9 @@ class PrometheusDataGenerator:
                     interval = sequence["interval"]
                 else:
                     logger.warning(
-                        "interval for metric {} not set, setting default to 1.".format(metric_metadata["name"])
+                        "interval for metric {} instance {} not set, setting default to 1.".format(
+                            metric_metadata["name"], instance_metadata.get("name", "unnamed")
+                        )
                     )
                     interval = 1
 
