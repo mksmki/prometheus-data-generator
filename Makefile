@@ -21,11 +21,11 @@ test:
 		alexperezpujol/tox:latest tox
 
 docker-build:
-	docker build -t littleangryclouds/prometheus-data-generator .
+	docker build -t mksmki/prometheus-data-generator .
 
 docker-push:
-	@docker tag littleangryclouds/prometheus-data-generator:latest littleangryclouds/prometheus-data-generator:$(VERSION)
-	@docker push littleangryclouds/prometheus-data-generator:latest
-	@docker push littleangryclouds/prometheus-data-generator:$(VERSION)
+	@docker tag mksmki/prometheus-data-generator:latest mksmki/prometheus-data-generator:$(VERSION)
+	@docker push mksmki/prometheus-data-generator:latest
+	@docker push mksmki/prometheus-data-generator:$(VERSION)
 
 all: clean test build
