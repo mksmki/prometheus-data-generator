@@ -10,7 +10,8 @@ from flask import Flask, Response
 from prometheus_client import Gauge, Counter, Summary, Histogram
 from prometheus_client import generate_latest, CollectorRegistry
 
-from . import const
+supported_log_levels = ["INFO", "ERROR", "DEBUG"]
+logger = logging.getLogger("prometheus-data-generator")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,9 +19,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-logger = logging.getLogger("prometheus-data-generator")
 if "PDG_LOG_LEVEL" in environ:    # if PDG_LOG_LEVEL is set, use it
-    if environ["PDG_LOG_LEVEL"].upper() in const.supported_log_levels:
+    if environ["PDG_LOG_LEVEL"].upper() in supported_log_levels:
         logger.setLevel(environ["PDG_LOG_LEVEL"].upper())
 
 
@@ -33,6 +33,10 @@ def read_configuration():
         path = environ["PDG_CONFIG"]
     else:
         path = "config.yml"
+
+    logger.debug(
+        "Reading configuration from {}".format(path)
+    )
     config = yaml.safe_load(open(path))
     return config
 
@@ -43,18 +47,25 @@ class PrometheusDataGenerator:
         Initialize the flask endpoint and launch the function that will throw
         the threads that will update the metrics.
         """
+        self.threads = []
         self.app = Flask(__name__)
         self.serve_metrics()
         self.init_metrics()
+        logger.debug(
+            "Total number of threads: {}".format(len(self.threads))
+        )
+
 
     def init_metrics(self):
         """
         Launch the threads that will update the metrics.
         """
-        self.threads = []
+        logger.debug(
+            "Initializing metrics"
+        )
         self.registry = CollectorRegistry()
         self.data = read_configuration()
-        for metric in self.data["config"]:
+        for metric in self.data["metrics"]:
             if "labels" in metric:
                 labels = metric["labels"]
             else:
@@ -99,6 +110,9 @@ class PrometheusDataGenerator:
             )
             t.start()
             self.threads.append(t)
+            logger.debug(
+                "Initialized metric {}".format(metric["name"])
+            )
 
     def update_metrics(self, metric_object, metric_metadata):
         """

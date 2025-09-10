@@ -1,6 +1,6 @@
 # ignore everything
 *
 # selectively add specific files/dirs
-!prometheus_data_generator/*
+!app/*
 !config.yml
 !requirements.txt

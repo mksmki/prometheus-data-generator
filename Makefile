@@ -18,13 +18,15 @@ clean:
 	rm -fr dist build
 
 test:
-	docker run --rm --name test-prometheus-data-generator --tty -v `pwd`/src:/tox \
+	docker run --rm --name test-prometheus-data-generator --tty -v `pwd`/app:/tox \
 		-v `pwd`/tox.ini:/tox.ini:ro -w /tox \
 		-v `pwd`/requirements.txt:/tox/requirements.txt:ro \
 		kiwicom/tox:$(TOX)
 
 docker-build:
-	docker build -t mksmki/prometheus-data-generator .
+	docker build \
+		--builder default \
+		-t mksmki/prometheus-data-generator .
 
 docker-push:
 	@docker tag mksmki/prometheus-data-generator:latest mksmki/prometheus-data-generator:$(VERSION)
@@ -32,7 +34,7 @@ docker-push:
 	@docker push mksmki/prometheus-data-generator:$(VERSION)
 
 run:
-	docker run --rm -ti -v `pwd`/config.yml:/config.yml -e PDG_LOG_LEVEL=DEBUG -p 127.0.0.1:9000:9000 \
+	docker run --rm -ti -v `pwd`/config.yml:/home/appuser/config.yml -e PDG_LOG_LEVEL=DEBUG -p 127.0.0.1:9000:9000 \
 		mksmki/prometheus-data-generator:latest
 
 all: clean test build
