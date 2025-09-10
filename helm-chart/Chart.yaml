@@ -1,0 +1,16 @@
+---
+apiVersion: v2
+appVersion: "1.1.0"
+description: A service that generates synthetic Prometheus metrics
+home: https://github.com/mksmki/prometheus-data-generator
+name: prometheus-data-generator
+keywords:
+- prometheus
+- data-generator
+- grafana
+- alerting
+- testing
+sources:
+- https://github.com/mksmki/prometheus-data-generator
+- https://github.com/littleangryclouds/prometheus-data-generator
+version: 1.1.0

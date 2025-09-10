@@ -2,55 +2,51 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: {{ include "app.fullname" . }}
   labels:
-    app: prometheus-data-generator
-  name: prometheus-data-generator
+    {{- include "app.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: prometheus-data-generator
+      {{- include "app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: prometheus-data-generator
+        {{- include "app.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-      - image: littleangryclouds/prometheus-data-generator:0.2
-        imagePullPolicy: IfNotPresent
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: PDG_CONFIG
           value: /pdg/config.yml
-        name: prometheus-data-generator
         ports:
-        - containerPort: 9000
+        - name: metrics
+          containerPort: 9000
           protocol: TCP
         livenessProbe:
           httpGet:
             path: /
-            port: 9000
+            port: metrics
             scheme: HTTP
         readinessProbe:
           httpGet:
             path: /
-            port: 9000
+            port: metrics
             scheme: HTTP
         resources:
-          limits:
-            cpu: 100m
-            memory: 100Mi
-          requests:
-            cpu: 50m
-            memory: 50Mi
+          {{- toYaml .Values.resources | nindent 10 }}
         volumeMounts:
         - name: config
           mountPath: /pdg/
-      - image: quay.io/coreos/configmap-reload:v0.0.1
+      - name: config-reloader
+        image: quay.io/coreos/configmap-reload:v0.0.1
         args:
         - -webhook-url=http://localhost:9000/-/reload
         - -volume-dir=/pdg/
         - -webhook-method=GET
-        name: config-reloader
         resources:
           limits:
             cpu: 5m
@@ -65,4 +61,4 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: prometheus-data-generator
+          name: {{ include "app.fullname" . }}

@@ -2,13 +2,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  name: {{ include "app.fullname" . }}
   labels:
-    app: prometheus-data-generator
+    {{- include "app.labels" . | nindent 4 }}
     prometheus: kube-prometheus
     # this label is needed in case of using default kube-prometheus-stack helm chart
     # so that prometheus picks this up
     app.kubernetes.io/managed-by: Helm
-  name: prometheus-data-generator
 spec:
   endpoints:
   - interval: 10s
@@ -16,4 +16,4 @@ spec:
     port: metrics
   selector:
     matchLabels:
-      app: prometheus-data-generator
+      {{- include "app.selectorLabels" . | nindent 6 }}
