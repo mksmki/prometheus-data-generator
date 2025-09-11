@@ -34,7 +34,8 @@ docker-push:
 	@docker push mksmki/prometheus-data-generator:$(VERSION)
 
 run:
-	docker run --rm -ti -v `pwd`/config.yml:/home/appuser/config.yml -e PDG_LOG_LEVEL=DEBUG -p 127.0.0.1:9000:9000 \
+	docker run --rm -ti --name pdg -v `pwd`/config.yml:/home/appuser/config.yml \
+		-e PDG_LOG_LEVEL=DEBUG -p 127.0.0.1:9000:9000 \
 		mksmki/prometheus-data-generator:latest
 
 all: clean test build
